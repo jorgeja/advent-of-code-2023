@@ -41,7 +41,6 @@ fn find_digits_in_line(input: &str) -> i32 {
                 };
 
                 if digit > 0 {
-                    let last_index = current_index + 1;
                     break;
                 }
             }
