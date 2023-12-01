@@ -24,7 +24,6 @@ fn find_digits_in_line(input: &str) -> i32 {
             let digit = (bytes[current_index] - 48) as i32;
             digits.push(digit);
             last_found_index = current_index + 1;
-            eprintln!("[{current_index}] {digit}");
         } else {
             let mut digit = 0;
             for i in last_found_index..current_index {
@@ -43,7 +42,6 @@ fn find_digits_in_line(input: &str) -> i32 {
 
                 if digit > 0 {
                     let last_index = current_index + 1;
-                    eprintln!("[{i}..{last_index}] {digit}");
                     break;
                 }
             }
@@ -57,7 +55,6 @@ fn find_digits_in_line(input: &str) -> i32 {
 
     if let (Some(first), Some(last)) = (digits.first(), digits.last()) {        
         let res = first * 10 + last;
-        eprintln!("Res: {res}");
         res 
     } else {
         0
