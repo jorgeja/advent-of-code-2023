@@ -49,6 +49,3 @@ fn fetch_todays_input(year: u32, day: u32) -> Result<String, Box<dyn Error>> {
 }
 
 fn main() {}
-
-#[cfg(test)]
-mod tests {}
