@@ -52,9 +52,9 @@ fn find_digits_in_line(input: &str) -> i32 {
         current_index += 1;
     }
 
-    if let (Some(first), Some(last)) = (digits.first(), digits.last()) {        
+    if let (Some(first), Some(last)) = (digits.first(), digits.last()) {
         let res = first * 10 + last;
-        res 
+        res
     } else {
         0
     }
@@ -66,8 +66,8 @@ fn solve_part2(input: &str) -> i32 {
 
 #[cfg(test)]
 mod tests {
-    use crate::{get_input};
     use super::*;
+    use crate::get_input;
 
     #[test]
     fn day1_part1_test() {
@@ -79,7 +79,7 @@ mod tests {
     fn day1_part1() {
         let input = get_input(2023, 1).unwrap();
         let res = solve_part1(&input);
-        eprintln!("{res}");
+        println!("Day1 Part1 Result: {res}");
     }
     #[test]
     fn day1_part2_test() {
@@ -92,6 +92,6 @@ mod tests {
     fn day1_part2() {
         let test_input = get_input(2023, 1).unwrap();
         let res = solve_part2(&test_input);
-        eprintln!("{res}");
+        println!("Day1 Part2 Result: {res}");
     }
 }

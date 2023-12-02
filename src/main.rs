@@ -1,4 +1,8 @@
+#![allow(unused_imports)]
+#![allow(dead_code)]
+
 mod day1;
+mod day2;
 
 use reqwest::{cookie::Jar, Url};
 use std::{
@@ -17,7 +21,6 @@ pub fn get_input(year: u32, day: u32) -> Result<String, Box<dyn Error>> {
     let day_file = format!("{}/inputs/day_{day}_input.txt", directory);
     let p = Path::new(&day_file);
     if p.exists() {
-        eprintln!("found {} it on disk!", day_file);
         Ok(read_to_string(p)?)
     } else {
         let s = fetch_todays_input(year, day)?;
