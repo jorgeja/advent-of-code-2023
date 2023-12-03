@@ -61,7 +61,7 @@ impl FromStr for CubeSet {
                 .next()
                 .ok_or("missing number of cubes")?
                 .parse::<i32>()?;
-            
+
             let color = split.next().ok_or("missing cube color")?;
             match color {
                 "red" => cubes_set.red = num,
