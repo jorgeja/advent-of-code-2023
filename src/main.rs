@@ -4,6 +4,7 @@
 mod day1;
 mod day2;
 mod day3;
+mod day4;
 
 use reqwest::{cookie::Jar, Url};
 use std::{

@@ -222,7 +222,7 @@ mod tests {
     }
 
     #[test]
-    fn day2_part2() -> Result<(), Box<dyn Error>> {
+    fn day3_part2() -> Result<(), Box<dyn Error>> {
         let input = get_input(2023, 3)?;
         let res = solve_part2(&input);
         println!("Day3 Part2 Result: {res}");
