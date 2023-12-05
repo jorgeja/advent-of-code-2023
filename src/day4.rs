@@ -11,7 +11,7 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
 struct Card {
     id: i32,
     winning_numbers: Vec<i32>,
-    numbers: Vec<i32>
+    numbers: Vec<i32>,
 }
 
 impl Card {
@@ -41,7 +41,7 @@ impl FromStr for Card {
         let mut card = Card {
             id: 0,
             winning_numbers: Vec::default(),
-            numbers: Vec::default()
+            numbers: Vec::default(),
         };
 
         let mut card_split = s.split(": ");
@@ -57,7 +57,7 @@ impl FromStr for Card {
                 format!("Could not parse to int: '{}'", card_id);
             }
         }
-        
+
         let nums = card_split.next().ok_or("missing number info")?;
         let mut num_split = nums.split(" | ");
         let winning_numbers_split = num_split
@@ -81,11 +81,12 @@ fn solve_part1(input: &str) -> i32 {
     input
         .lines()
         .map(Card::from_str)
-        .filter_map(|c| {
-            match c {
-                Ok(c) => Some(c),
-                Err(e) => { println!("{:?}", e); None}
-            }            
+        .filter_map(|c| match c {
+            Ok(c) => Some(c),
+            Err(e) => {
+                println!("{:?}", e);
+                None
+            }
         })
         .map(|c| c.value())
         .sum()
@@ -95,10 +96,10 @@ fn solve_part2(input: &str) -> u32 {
     let mut card_matches = input
         .lines()
         .map(Card::from_str)
-        .filter_map(|c| {
-            c.ok()           
-        }).map(|c| (c.num_matches(), 1u32) ).collect::<Vec<_>>();
-    
+        .filter_map(|c| c.ok())
+        .map(|c| (c.num_matches(), 1u32))
+        .collect::<Vec<_>>();
+
     let mut num_cards = 0;
     for i in 0..card_matches.len() {
         let (matches, instances) = card_matches[i];
