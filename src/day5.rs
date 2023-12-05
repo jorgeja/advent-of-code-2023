@@ -1,4 +1,4 @@
-use std::{error::Error, num, str::FromStr};
+use std::{error::Error, num, str::FromStr, collections::HashSet};
 
 const EXAMPLE: &str = r#"seeds: 79 14 55 13
 
@@ -157,7 +157,7 @@ fn solve_part1(input: &str) -> u64 {
 fn solve_part2(input: &str) -> u64 {
     let (seeds, all_maps) = parse(input);
 
-    let mut all_seeds = Vec::default();
+    let mut all_seeds = HashSet::new();
     for v in seeds.chunks(2) {
         all_seeds.extend(v[0]..v[0]+v[1]);
     }
