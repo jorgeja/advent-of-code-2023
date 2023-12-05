@@ -51,6 +51,15 @@ impl Range {
             None
         }
     }
+
+    fn reverse(&self, output: u64) -> Option<u64> {
+        if self.output_start <= output && output < self.output_start + self.length {
+            let diff = output - self.output_start;
+            Some(self.input_start + diff)
+        } else {
+            None
+        }
+    }
 }
 
 impl FromStr for Range {
@@ -91,6 +100,23 @@ impl Map {
             }
         }
         input
+    }
+
+    fn reverse(&self, output: u64) -> u64 {
+        let last = self.ranges.last().unwrap();
+        if output < self.ranges[0].output_start || last.output_start + last.length <= output {
+            //println!("{}:  {output} outside bounds ", self.name);
+            return output;
+        } else {
+            for r in &self.ranges {
+                if let Some(mapped_output) = r.reverse(output) {
+                    //println!("{}: Found {output} -> {mapped_output} in {:?}", self.name, r);
+                    return mapped_output;
+                }
+            }
+        }
+        //println!("{}: No Matches: {output} outside bounds ", self.name);
+        output
     }
 }
 
@@ -147,7 +173,7 @@ fn solve_part1(input: &str) -> u64 {
     seeds.iter().map(|seed|{
         let mut v = *seed;
         for map in &all_maps {
-        //    print!("[{seed}] ");
+           // print!("[{seed}] ");
            v = map.mapped(v)
         }
         v
@@ -155,21 +181,33 @@ fn solve_part1(input: &str) -> u64 {
 }
 
 fn solve_part2(input: &str) -> u64 {
-    let (seeds, all_maps) = parse(input);
+    let (seeds, mut all_maps) = parse(input);
 
-    let mut all_seeds = HashSet::new();
+    all_maps.iter_mut().for_each(|map| map.ranges.sort_by(|e1, e2| e1.output_start.cmp(&e2.output_start)));
+
+    println!("Input Seeds: {:?}", seeds);
+    let mut ranges = Vec::new();
+    let mut max = 0;
     for v in seeds.chunks(2) {
-        all_seeds.extend(v[0]..v[0]+v[1]);
+        let (new_min, new_max) = (v[0], v[0] + v[1]);
+        ranges.push(new_min..new_max);
+        max = max.max(new_max);
     }
 
-    all_seeds.iter().map(|seed|{
-        let mut v = *seed;
-        for map in &all_maps {
-           //    print!("[{seed}] ");
-           v = map.mapped(v)
+    for loc in 0..max {
+        let mut v = loc;
+        for map in all_maps.iter().rev() {
+           v = map.reverse(v);
         }
-        v
-    }).min().unwrap()
+
+        for range in &ranges {
+            if range.contains(&v) {
+                return loc
+            }
+        }
+    }
+
+    0
 }
 
 #[cfg(test)]
