@@ -1,4 +1,4 @@
-use std::{error::Error, num, str::FromStr, collections::HashSet};
+use std::{collections::HashSet, error::Error, num, str::FromStr};
 
 const EXAMPLE: &str = r#"seeds: 79 14 55 13
 
@@ -72,17 +72,21 @@ impl FromStr for Range {
 
         if nums.len() != 3 {
             //println!("Range::from_str: '{s}' parsed to {:?}", nums);
-            return Err(())
+            return Err(());
         }
-        
-        Ok(Range { input_start: nums[1], output_start: nums[0], length: nums[2]})
+
+        Ok(Range {
+            input_start: nums[1],
+            output_start: nums[0],
+            length: nums[2],
+        })
     }
 }
 
 #[derive(Debug, Default)]
 struct Map {
     name: String,
-    ranges: Vec<Range>
+    ranges: Vec<Range>,
 }
 
 impl Map {
@@ -120,7 +124,7 @@ impl Map {
     }
 }
 
-fn parse(input: &str) -> (Vec<u64>, Vec<Map>){
+fn parse(input: &str) -> (Vec<u64>, Vec<Map>) {
     let mut lines = input.lines();
 
     let seeds = lines
@@ -141,7 +145,8 @@ fn parse(input: &str) -> (Vec<u64>, Vec<Map>){
     for line in lines {
         if let Some(mut map) = current_map {
             if line.is_empty() {
-                map.ranges.sort_by(|e1, e2| e1.input_start.cmp(&e2.input_start));
+                map.ranges
+                    .sort_by(|e1, e2| e1.input_start.cmp(&e2.input_start));
                 all_maps.push(map);
                 current_map = None;
             } else {
@@ -156,7 +161,8 @@ fn parse(input: &str) -> (Vec<u64>, Vec<Map>){
     }
 
     if let Some(mut map) = current_map {
-        map.ranges.sort_by(|e1, e2| e1.input_start.cmp(&e2.input_start));
+        map.ranges
+            .sort_by(|e1, e2| e1.input_start.cmp(&e2.input_start));
         all_maps.push(map);
     }
 
@@ -170,20 +176,27 @@ fn parse(input: &str) -> (Vec<u64>, Vec<Map>){
 fn solve_part1(input: &str) -> u64 {
     let (seeds, all_maps) = parse(input);
 
-    seeds.iter().map(|seed|{
-        let mut v = *seed;
-        for map in &all_maps {
-           // print!("[{seed}] ");
-           v = map.mapped(v)
-        }
-        v
-    }).min().unwrap()
+    seeds
+        .iter()
+        .map(|seed| {
+            let mut v = *seed;
+            for map in &all_maps {
+                // print!("[{seed}] ");
+                v = map.mapped(v)
+            }
+            v
+        })
+        .min()
+        .unwrap()
 }
 
 fn solve_part2(input: &str) -> u64 {
     let (seeds, mut all_maps) = parse(input);
 
-    all_maps.iter_mut().for_each(|map| map.ranges.sort_by(|e1, e2| e1.output_start.cmp(&e2.output_start)));
+    all_maps.iter_mut().for_each(|map| {
+        map.ranges
+            .sort_by(|e1, e2| e1.output_start.cmp(&e2.output_start))
+    });
 
     println!("Input Seeds: {:?}", seeds);
     let mut ranges = Vec::new();
@@ -197,12 +210,12 @@ fn solve_part2(input: &str) -> u64 {
     for loc in 0..max {
         let mut v = loc;
         for map in all_maps.iter().rev() {
-           v = map.reverse(v);
+            v = map.reverse(v);
         }
 
         for range in &ranges {
             if range.contains(&v) {
-                return loc
+                return loc;
             }
         }
     }
