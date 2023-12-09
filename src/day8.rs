@@ -22,6 +22,7 @@ fn parse(input: &str) -> (String, HashMap<String, (String, String)>) {
     lines.next();
 
     let nodes = lines.filter_map(|l| {
+
         let mut parts = l.split(" = ");
         let key = parts.next().unwrap().to_owned();
 
@@ -58,7 +59,36 @@ fn solve_part1(input: &str) -> u32 {
 }
 
 fn solve_part2(input: &str) -> u32 {
-    0
+    let (_, nodes) = parse(input);
+
+    let mut next_nodes = nodes.keys().filter(|k| k.ends_with('A') ).map(|s| (s.as_str(), 0)).collect::<Vec<_>>();
+    println!("Num start nodes: {}", next_nodes.len());
+    for (n, s) in &next_nodes {
+        println!("{}, {}", n, s);
+    }
+    let mut steps = 1;
+    while next_nodes.iter().filter(|(_, step)| *step != 0).count() < 3 {
+        for (node, step) in next_nodes.iter_mut() {
+            let (left, right) = &nodes[*node];
+            match steps % 2 {
+                0 => *node = right.as_ref(),
+                1 => *node = left.as_ref(),
+                _ => unreachable!()
+            }
+
+            if node.ends_with('Z') {
+                *step = steps;
+                println!("{node} {step}");
+            }
+        }
+        steps += 1;
+    }
+
+    for (n, s) in next_nodes {
+        println!("{}, {}", n, s);
+    }
+
+    steps
 }
 
 #[cfg(test)]
@@ -92,11 +122,11 @@ mod tests {
     //     assert_eq!(res, 5905);
     // }
 
-    // #[test]
-    // fn day8_part2() -> Result<(), Box<dyn Error>> {
-    //     let input = get_input(2023, 8)?;
-    //     let res = solve_part2(&input);
-    //     println!("day8 Part2 Result: {res}");
-    //     Ok(())
-    // }
+    #[test]
+    fn day8_part2() -> Result<(), Box<dyn Error>> {
+        let input = get_input(2023, 8)?;
+        let res = solve_part2(&input);
+        println!("day8 Part2 Result: {res}");
+        Ok(())
+    }
 }
