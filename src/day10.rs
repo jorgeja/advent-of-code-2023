@@ -376,7 +376,8 @@ fn path_find(pos1: Pos, pos2: Pos, dir: Dir, outside_nodes: &HashSet<(i32, i32)>
 
         if let (Some(pipe1), Some(pipe2)) = (field.index(pos1), field.index(pos2)) {
             if (loop_coords.contains(&pos1) && !is_opening(dir, pipe1, Order::First)) || (loop_coords.contains(&pos1) && !is_opening(dir, pipe2, Order::Second)) {
-                //println!("No opening between: {:?} {:?} dir {:?}", pipe1 as char, pipe2 as char, dir);
+                //println!("No opening:");
+                //format_node(pipe1, pipe2, dir);
                 continue
             } else {
                 //println!("Squeezing between: {:?} {:?} dir {:?}", pipe1 as char, pipe2 as char, dir);
@@ -413,6 +414,14 @@ fn next_dirs(dir: Dir) -> [Dir; 3] {
         Dir::Up =>  [Dir::Left, Dir::Up, Dir::Right],
         Dir::Right => [Dir::Up, Dir::Right, Dir::Down],
         Dir::Down => [Dir::Right, Dir::Down, Dir::Left],
+    }
+}
+fn format_node(pipe1: u8, pipe2:u8, dir: Dir) {
+    match dir {
+        Dir::Left => println!(" {}x\n {}x", pipe2 as char, pipe1 as char),
+        Dir::Up => println!(" {}{}\n xx", pipe1 as char, pipe2 as char),
+        Dir::Right =>  println!(" x{}\n x{}", pipe1 as char, pipe2 as char),
+        Dir::Down =>  println!(" xx\n {}{}", pipe2 as char, pipe1 as char),
     }
 }
 
@@ -462,10 +471,10 @@ fn is_opening(dir: Dir, pipe:u8, order: Order) -> bool {
         (b'F', First, Dir::Up) => false,
         (b'F', Second, Dir::Up) => true,
 
-        (b'F', First, Dir::Left) => false,
-        (b'F', Second, Dir::Left) => true,
-        (b'F', First, Dir::Right) => true,
-        (b'F', Second, Dir::Right) => false,
+        (b'F', First, Dir::Left) => true,
+        (b'F', Second, Dir::Left) => false,
+        (b'F', First, Dir::Right) => false,
+        (b'F', Second, Dir::Right) => true,
 
         _ => false
     }
