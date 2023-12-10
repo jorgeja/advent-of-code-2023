@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error, num, str::FromStr, cmp::Ordering};
+use std::{cmp::Ordering, collections::HashMap, error::Error, num, str::FromStr};
 const EXAMPLE: &str = r#"RL
 
 AAA = (BBB, CCC)
@@ -15,22 +15,35 @@ AAA = (BBB, BBB)
 BBB = (AAA, ZZZ)
 ZZZ = (ZZZ, ZZZ)"#;
 
+const EXAMPLE_PART2: &str = r#"LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)
+"#;
+
 fn parse(input: &str) -> (String, HashMap<String, (String, String)>) {
     let mut lines = input.lines();
     let instructions = lines.next().unwrap().to_owned();
-    
+
     lines.next();
 
-    let nodes = lines.filter_map(|l| {
+    let nodes = lines
+        .filter_map(|l| {
+            let mut parts = l.split(" = ");
+            let key = parts.next().unwrap().to_owned();
 
-        let mut parts = l.split(" = ");
-        let key = parts.next().unwrap().to_owned();
-
-        let mut lr = parts.next().unwrap().split(", ");
-        let left = lr.next().unwrap().strip_prefix('(').unwrap().to_owned();
-        let right = lr.next().unwrap().strip_suffix(')').unwrap().to_owned();
-        Some((key, (left, right)))
-    }).collect();
+            let mut lr = parts.next().unwrap().split(", ");
+            let left = lr.next().unwrap().strip_prefix('(').unwrap().to_owned();
+            let right = lr.next().unwrap().strip_suffix(')').unwrap().to_owned();
+            Some((key, (left, right)))
+        })
+        .collect();
 
     (instructions, nodes)
 }
@@ -58,32 +71,64 @@ fn solve_part1(input: &str) -> u32 {
     steps
 }
 
-fn solve_part2(input: &str) -> u32 {
+fn solve_part2(input: &str) -> u64 {
     let (_, nodes) = parse(input);
 
-    let mut next_nodes = nodes.keys().filter(|k| k.ends_with('A') ).map(|s| (s.as_str(), 0)).collect::<Vec<_>>();
+    let mut next_nodes = nodes
+        .keys()
+        .filter(|k| k.ends_with('A'))
+        .map(|s| (s.as_str(), 0))
+        .collect::<Vec<_>>();
+    next_nodes.sort();
+    //let end_nodes = nodes.keys().filter(|k| k.ends_with('Z') ).map(|s| s.as_str()).collect::<Vec<_>>();
     println!("Num start nodes: {}", next_nodes.len());
     for (n, s) in &next_nodes {
         println!("{}, {}", n, s);
     }
-    let mut steps = 1;
-    while next_nodes.iter().filter(|(_, step)| *step != 0).count() < 3 {
-        for (node, step) in next_nodes.iter_mut() {
+
+    // println!("Num end nodes: {}", end_nodes.len());
+    // for s in &end_nodes {
+    //     println!("{s}");
+    // }
+
+    let mut previously_visited = HashMap::new();
+    let mut steps = 0u64;
+    while next_nodes.iter().any(|(_, step)| *step == 0) {
+        steps += 1;
+        let mod_step: u8 = (steps % 2) as u8;
+
+        for (i, (node, step)) in next_nodes.iter_mut().enumerate() {
             let (left, right) = &nodes[*node];
-            match steps % 2 {
+
+            if let Some(last_steps) = previously_visited.get(&(i as u8, mod_step, *node)) {
+                if i == 2 {
+                    println!("{steps}: Cycle found for {node}:{step} on path {i} last visited at {last_steps}: {left} {right}");
+                }
+            } else {
+                previously_visited.insert((i as u8, mod_step, *node), steps);
+            }
+            match mod_step {
                 0 => *node = right.as_ref(),
                 1 => *node = left.as_ref(),
-                _ => unreachable!()
+                _ => unreachable!(),
             }
 
-            if node.ends_with('Z') {
+            if node.ends_with("Z") {
                 *step = steps;
-                println!("{node} {step}");
+                break;
+            }
+
+            if node.contains("Z") {
+                println!("Z-node: {node}");
             }
         }
-        steps += 1;
+
+        if steps > 200 {
+            break;
+        }
     }
 
+    println!("Current state:");
     for (n, s) in next_nodes {
         println!("{}, {}", n, s);
     }
@@ -118,8 +163,8 @@ mod tests {
 
     // #[test]
     // fn day8_part2_test() {
-    //     let res = solve_part2(EXAMPLE_2);
-    //     assert_eq!(res, 5905);
+    //     let res = solve_part2(EXAMPLE_PART2);
+    //     assert_eq!(res, 6);
     // }
 
     #[test]

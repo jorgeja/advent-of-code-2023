@@ -1,4 +1,4 @@
-use std::{collections::HashSet, error::Error, num, str::FromStr, cmp::Ordering};
+use std::{cmp::Ordering, collections::HashSet, error::Error, num, str::FromStr};
 const EXAMPLE: &str = r#"32T3K 765
 T55J5 684
 KK677 28
@@ -30,7 +30,7 @@ impl Card {
             '3' => 3,
             '2' => 2,
             'J' => 1,
-            _ => 0
+            _ => 0,
         }
     }
 }
@@ -49,15 +49,15 @@ enum HandType {
     Three,
     FullHouse,
     Four,
-    Five
+    Five,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Hand {
-    cards : [Card; 5],
-    bid : u32,
-    kind : HandType,
-    old_kind : HandType
+    cards: [Card; 5],
+    bid: u32,
+    kind: HandType,
+    old_kind: HandType,
 }
 
 impl PartialOrd for Hand {
@@ -73,7 +73,7 @@ impl Ord for Hand {
                 let comp = self.cards[i].partial_cmp(&other.cards[i]).unwrap();
                 if comp != Ordering::Equal {
                     return comp;
-                } 
+                }
             }
             Ordering::Equal
         } else {
@@ -91,14 +91,18 @@ impl Hand {
                 jokers += 1;
                 continue;
             }
-            if occurances[i] == -1 {continue};
+            if occurances[i] == -1 {
+                continue;
+            };
 
             occurances[i] = 1;
             for j in 0..self.cards.len() {
-                if i == j || occurances[j] == -1 { continue };
+                if i == j || occurances[j] == -1 {
+                    continue;
+                };
                 if self.cards[i] == self.cards[j] {
-                   occurances[i] += 1;
-                   occurances[j] = -1; 
+                    occurances[i] += 1;
+                    occurances[j] = -1;
                 }
             }
         }
@@ -110,14 +114,14 @@ impl Hand {
                 3 => Three,
                 4 => Four,
                 5 => Five,
-                _ => { continue }
+                _ => continue,
             };
             match (new_kind, self.kind) {
                 (OnePair, OnePair) => self.kind = TwoPair,
                 (OnePair, Three) => self.kind = FullHouse,
                 (Three, OnePair) => self.kind = FullHouse,
                 (new_kind, old_kind) if new_kind > old_kind => self.kind = new_kind,
-                _ => {},
+                _ => {}
             }
         }
 
@@ -125,34 +129,26 @@ impl Hand {
         if include_jokers && jokers > 0 {
             use HandType::*;
             match self.kind {
-                HighCard => {
-                    match jokers {
-                        1 => self.kind = OnePair,
-                        2 => self.kind = Three,
-                        3 => self.kind = Four,
-                        4 => self.kind = Five,
-                        _ => {}
-                    }
-                }, 
-                OnePair => {
-                    match jokers {
-                        1 => self.kind = Three,
-                        2 => self.kind = Four,
-                        3 => self.kind = Five,
-                        _ => {}
-                    }
+                HighCard => match jokers {
+                    1 => self.kind = OnePair,
+                    2 => self.kind = Three,
+                    3 => self.kind = Four,
+                    4 => self.kind = Five,
+                    _ => {}
+                },
+                OnePair => match jokers {
+                    1 => self.kind = Three,
+                    2 => self.kind = Four,
+                    3 => self.kind = Five,
+                    _ => {}
                 },
                 TwoPair => self.kind = FullHouse,
-                Three => {
-                    match jokers {
-                        1 => self.kind = Four,
-                        2 => self.kind = Five,
-                        _ => {}
-                    }
+                Three => match jokers {
+                    1 => self.kind = Four,
+                    2 => self.kind = Five,
+                    _ => {}
                 },
-                Four => {
-                    self.kind = Five
-                },
+                Four => self.kind = Five,
                 _ => {}
             }
         }
@@ -163,10 +159,10 @@ impl FromStr for Hand {
     type Err = Box<dyn Error>;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut hand = Hand {
-            cards : [Card::default(); 5],
+            cards: [Card::default(); 5],
             bid: 0,
-            kind : HandType::HighCard,
-            old_kind : HandType::HighCard
+            kind: HandType::HighCard,
+            old_kind: HandType::HighCard,
         };
         let mut parts = s.split(' ');
         let cards = parts.next().ok_or("missing cards")?;
@@ -185,20 +181,27 @@ impl FromStr for Hand {
 }
 
 fn parse(input: &str) -> Vec<Hand> {
-    input.lines().filter_map(|l| match Hand::from_str(l) {
-        Ok(h) => Some(h),
-        Err(e) => {
-            println!("Bad Hand: {:?}", e);
-            None
-        }
-    }).collect()
+    input
+        .lines()
+        .filter_map(|l| match Hand::from_str(l) {
+            Ok(h) => Some(h),
+            Err(e) => {
+                println!("Bad Hand: {:?}", e);
+                None
+            }
+        })
+        .collect()
 }
 
 fn solve_part1(input: &str) -> u32 {
     let mut hands = parse(input);
     hands.iter_mut().for_each(|h| h.determine_hand_type(false));
     hands.sort();
-    hands.iter().enumerate().map(|(i, h)| (i+1) as u32 * h.bid).sum()
+    hands
+        .iter()
+        .enumerate()
+        .map(|(i, h)| (i + 1) as u32 * h.bid)
+        .sum()
 }
 
 fn solve_part2(input: &str) -> u32 {
@@ -208,10 +211,14 @@ fn solve_part2(input: &str) -> u32 {
 
     for (i, h) in hands.iter().enumerate() {
         if h.kind != h.old_kind {
-            println!("[{i}] {:?}", h);   
+            println!("[{i}] {:?}", h);
         }
     }
-    hands.iter().enumerate().map(|(i, h)| (i+1) as u32 * h.bid).sum()
+    hands
+        .iter()
+        .enumerate()
+        .map(|(i, h)| (i + 1) as u32 * h.bid)
+        .sum()
 }
 
 #[cfg(test)]
