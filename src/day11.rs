@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-const EXAMPLE : &str = r#"...#......
+const EXAMPLE: &str = r#"...#......
 .......#..
 #.........
 ..........
@@ -11,29 +11,39 @@ const EXAMPLE : &str = r#"...#......
 .......#..
 #...#....."#;
 
-fn parse(input: &str) -> (Vec<(i64, i64)>, HashSet<usize>, HashSet<usize>){
+fn parse(input: &str) -> (Vec<(i64, i64)>, HashSet<usize>, HashSet<usize>) {
     let mut filled_rows = HashSet::new();
     let mut filled_columns = HashSet::new();
     let mut width = 0;
     let mut height = 0;
-    let galaxies = input.lines().enumerate().map(|(row, line)| {
-        let mut galaxies = Vec::new();
-        for (col, c) in line.chars().enumerate() {
-            if c == '#' {
-                galaxies.push((col as i64, row as i64));
-                filled_rows.insert(row);
-                filled_columns.insert(col);
+    let galaxies = input
+        .lines()
+        .enumerate()
+        .map(|(row, line)| {
+            let mut galaxies = Vec::new();
+            for (col, c) in line.chars().enumerate() {
+                if c == '#' {
+                    galaxies.push((col as i64, row as i64));
+                    filled_rows.insert(row);
+                    filled_columns.insert(col);
+                }
+                width = width.max(col + 1);
             }
-            width = width.max(col + 1);
-        }
-        height = height.max(row + 1);
-        galaxies
-    }).flatten().collect::<Vec<_>>();
+            height = height.max(row + 1);
+            galaxies
+        })
+        .flatten()
+        .collect::<Vec<_>>();
 
     (galaxies, filled_columns, filled_rows)
 }
 
-fn find_galaxy_distance(empty_size: i64, mut galaxies: Vec<(i64, i64)>, filled_columns: &HashSet<usize>, filled_rows: &HashSet<usize>) -> i64 {
+fn find_galaxy_distance(
+    empty_size: i64,
+    mut galaxies: Vec<(i64, i64)>,
+    filled_columns: &HashSet<usize>,
+    filled_rows: &HashSet<usize>,
+) -> i64 {
     let empty_size = empty_size - 1;
     for g in galaxies.iter_mut() {
         for c in 0..g.0 {
@@ -51,7 +61,9 @@ fn find_galaxy_distance(empty_size: i64, mut galaxies: Vec<(i64, i64)>, filled_c
     let mut distances = Vec::new();
     for i in 0..galaxies.len() {
         for j in i..galaxies.len() {
-            if i == j { continue }
+            if i == j {
+                continue;
+            }
 
             let g1 = galaxies[i];
             let g2 = galaxies[j];
@@ -61,7 +73,7 @@ fn find_galaxy_distance(empty_size: i64, mut galaxies: Vec<(i64, i64)>, filled_c
             distances.push(distance);
         }
     }
-    
+
     distances.iter().sum()
 }
 

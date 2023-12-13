@@ -1,11 +1,12 @@
 use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet},
+    default,
     error::Error,
     fmt::{Debug, Write},
     num,
     slice::SliceIndex,
-    str::FromStr, default,
+    str::FromStr,
 };
 const EXAMPLE: &str = r#"-L|F7
 7S-7|
@@ -41,7 +42,7 @@ L--J.L7...LJS7F-7L7.
 ....FJL-7.||.||||...
 ....L---J.LJ.LJLJ..."#;
 
-const EXAMPLE_PART2_SMALL : &str = r#"..........
+const EXAMPLE_PART2_SMALL: &str = r#"..........
 .S------7.
 .|F----7|.
 .||....||.
@@ -51,7 +52,7 @@ const EXAMPLE_PART2_SMALL : &str = r#"..........
 .L--JL--J.
 .........."#;
 
-const EXAMPLE_PART2_SMALLEST : &str = r#"...........
+const EXAMPLE_PART2_SMALLEST: &str = r#"...........
 .S-------7.
 .|F-----7|.
 .||.....||.
@@ -60,7 +61,6 @@ const EXAMPLE_PART2_SMALLEST : &str = r#"...........
 .|..|.|..|.
 .L--J.L--J.
 ..........."#;
-
 
 struct Field {
     field: Vec<Vec<u8>>,
@@ -180,7 +180,7 @@ fn traverse(start_pos: Pos, field: &Field) -> Loop {
         ((0, 1), Dir::Down),
     ] {
         let mut pos = (start_pos.0 + d_pos.0, start_pos.1 + d_pos.1);
-        
+
         if let Some(mut pipe) = field.index(pos) {
             let mut dir = start_dir;
             let mut steps = 1;
@@ -227,7 +227,7 @@ fn substitute_start_pipe(looop: &Loop, field: &mut Field) {
         (Dir::Left, Dir::Up) => b'7',
         (Dir::Right, Dir::Down) => b'L',
         (Dir::Right, Dir::Up) => b'F',
-        _ => unreachable!() 
+        _ => unreachable!(),
     };
     println!("Replacing startpos with {}", start_char as char);
     field.field[start_pos.1 as usize][start_pos.0 as usize] = start_char;
@@ -302,12 +302,15 @@ fn find_pools(looop: &Loop, field: &Field) -> u32 {
         .flatten()
         .collect::<HashSet<_>>();
 
-    let maybe_inside_pools: Vec<Vec<((i32, i32), Vec<(i32, i32)>)>> = pools.iter().filter_map(|pool| if !pool.0 {Some(pool.1.clone())} else {None}).collect::<Vec<_>>();
+    let maybe_inside_pools: Vec<Vec<((i32, i32), Vec<(i32, i32)>)>> = pools
+        .iter()
+        .filter_map(|pool| if !pool.0 { Some(pool.1.clone()) } else { None })
+        .collect::<Vec<_>>();
     maybe_inside_pools
         .iter()
         .filter(|pool| {
             //println!("Checking if pool is inside:");
-            let res = is_inside(&outside_nodes, &loop_coords, field, pool); 
+            let res = is_inside(&outside_nodes, &loop_coords, field, pool);
             //println!("This pool is {}", if res {"Inside"} else {"Outside"});
             res
         })
@@ -324,7 +327,7 @@ const edge_point_offsets: [(i32, i32); 9] = [
     (0, 1),
     (-1, 1),
     (-1, 0),
-    (-1, -1)
+    (-1, -1),
 ];
 
 const direction: [Dir; 8] = [
@@ -335,10 +338,15 @@ const direction: [Dir; 8] = [
     Dir::Down,
     Dir::Down,
     Dir::Left,
-    Dir::Left
+    Dir::Left,
 ];
 
-fn is_inside(outside_nodes: &HashSet<(i32, i32)>, loop_coords: &HashSet<(i32, i32)>, field: &Field, pool: &Vec<((i32, i32), Vec<(i32, i32)>)>) -> bool {
+fn is_inside(
+    outside_nodes: &HashSet<(i32, i32)>,
+    loop_coords: &HashSet<(i32, i32)>,
+    field: &Field,
+    pool: &Vec<((i32, i32), Vec<(i32, i32)>)>,
+) -> bool {
     let mut start_points = Vec::new();
     for (point, _) in pool.iter().filter(|p| !p.1.is_empty()) {
         for (i, window) in edge_point_offsets.windows(2).enumerate() {
@@ -348,7 +356,7 @@ fn is_inside(outside_nodes: &HashSet<(i32, i32)>, loop_coords: &HashSet<(i32, i3
                 start_points.push((pos1, pos2, direction[i]));
                 //println!("Possible crack in loop wall at {:?}", (pos1, pos2, direction[i]))
             }
-        } 
+        }
     }
 
     for (pos1, pos2, dir) in start_points {
@@ -360,14 +368,21 @@ fn is_inside(outside_nodes: &HashSet<(i32, i32)>, loop_coords: &HashSet<(i32, i3
     true
 }
 // Search for a way out, depth first
-fn path_find(pos1: Pos, pos2: Pos, dir: Dir, outside_nodes: &HashSet<(i32, i32)>, loop_coords: &HashSet<(i32, i32)>, field: &Field) -> bool {
+fn path_find(
+    pos1: Pos,
+    pos2: Pos,
+    dir: Dir,
+    outside_nodes: &HashSet<(i32, i32)>,
+    loop_coords: &HashSet<(i32, i32)>,
+    field: &Field,
+) -> bool {
     let mut stack = vec![(pos1, pos2, dir)];
     let mut visited = HashSet::new();
     while let Some((pos1, pos2, dir)) = stack.pop() {
         if outside_nodes.contains(&pos1) || outside_nodes.contains(&pos2) {
             println!("nodes {:?} {:?} are part of outside!", pos1, pos2);
             return true;
-        } 
+        }
         if visited.contains(&(pos1, pos2, dir)) {
             continue;
         } else {
@@ -375,14 +390,16 @@ fn path_find(pos1: Pos, pos2: Pos, dir: Dir, outside_nodes: &HashSet<(i32, i32)>
         }
 
         if let (Some(pipe1), Some(pipe2)) = (field.index(pos1), field.index(pos2)) {
-            if (loop_coords.contains(&pos1) && !is_opening(dir, pipe1, Order::First)) || (loop_coords.contains(&pos1) && !is_opening(dir, pipe2, Order::Second)) {
+            if (loop_coords.contains(&pos1) && !is_opening(dir, pipe1, Order::First))
+                || (loop_coords.contains(&pos1) && !is_opening(dir, pipe2, Order::Second))
+            {
                 //println!("No opening:");
                 //format_node(pipe1, pipe2, dir);
-                continue
+                continue;
             } else {
                 //println!("Squeezing between: {:?} {:?} dir {:?}", pipe1 as char, pipe2 as char, dir);
             }
-            
+
             let (pos_n1, pos_n2) = next_nodes(pos1, dir);
             let next_dirs = next_dirs(dir);
             stack.extend(&[
@@ -391,18 +408,21 @@ fn path_find(pos1: Pos, pos2: Pos, dir: Dir, outside_nodes: &HashSet<(i32, i32)>
                 (pos_n2, pos2, next_dirs[2]),
             ])
         } else {
-            println!("One of the nodes {:?} {:?} are outside the field", pos1, pos2);
+            println!(
+                "One of the nodes {:?} {:?} are outside the field",
+                pos1, pos2
+            );
             return true;
         }
     }
-    
+
     //println!("Could not find a path out from start {:?} {:?} dir {:?}", pos1, pos2, dir);
     false
 }
 
 fn next_nodes(pos1: Pos, dir: Dir) -> (Pos, Pos) {
     match dir {
-        Dir::Left => ((pos1.0 - 1, pos1.1), (pos1.0 - 1, pos1.1 - 1)), 
+        Dir::Left => ((pos1.0 - 1, pos1.1), (pos1.0 - 1, pos1.1 - 1)),
         Dir::Up => ((pos1.0, pos1.1 - 1), (pos1.0 + 1, pos1.1 - 1)),
         Dir::Right => ((pos1.0 + 1, pos1.1), (pos1.0 + 1, pos1.1 + 1)),
         Dir::Down => ((pos1.0, pos1.1 + 1), (pos1.0 - 1, pos1.1 + 1)),
@@ -411,36 +431,36 @@ fn next_nodes(pos1: Pos, dir: Dir) -> (Pos, Pos) {
 fn next_dirs(dir: Dir) -> [Dir; 3] {
     match dir {
         Dir::Left => [Dir::Down, Dir::Left, Dir::Up],
-        Dir::Up =>  [Dir::Left, Dir::Up, Dir::Right],
+        Dir::Up => [Dir::Left, Dir::Up, Dir::Right],
         Dir::Right => [Dir::Up, Dir::Right, Dir::Down],
         Dir::Down => [Dir::Right, Dir::Down, Dir::Left],
     }
 }
-fn format_node(pipe1: u8, pipe2:u8, dir: Dir) {
+fn format_node(pipe1: u8, pipe2: u8, dir: Dir) {
     match dir {
         Dir::Left => println!(" {}x\n {}x", pipe2 as char, pipe1 as char),
         Dir::Up => println!(" {}{}\n xx", pipe1 as char, pipe2 as char),
-        Dir::Right =>  println!(" x{}\n x{}", pipe1 as char, pipe2 as char),
-        Dir::Down =>  println!(" xx\n {}{}", pipe2 as char, pipe1 as char),
+        Dir::Right => println!(" x{}\n x{}", pipe1 as char, pipe2 as char),
+        Dir::Down => println!(" xx\n {}{}", pipe2 as char, pipe1 as char),
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Order {
     First,
-    Second
+    Second,
 }
-fn is_opening(dir: Dir, pipe:u8, order: Order) -> bool {
+fn is_opening(dir: Dir, pipe: u8, order: Order) -> bool {
     use Order::*;
     match (pipe, order, dir) {
-        (b'|', _, Dir::Down | Dir::Up ) => true,
-        (b'-', _, Dir::Left | Dir::Right ) => true,
+        (b'|', _, Dir::Down | Dir::Up) => true,
+        (b'-', _, Dir::Left | Dir::Right) => true,
 
         (b'L', First, Dir::Down) => true,
         (b'L', Second, Dir::Down) => false,
         (b'L', First, Dir::Up) => false,
         (b'L', Second, Dir::Up) => true,
-        
+
         (b'L', First, Dir::Left) => false,
         (b'L', Second, Dir::Left) => true,
         (b'L', First, Dir::Right) => true,
@@ -476,7 +496,7 @@ fn is_opening(dir: Dir, pipe:u8, order: Order) -> bool {
         (b'F', First, Dir::Right) => false,
         (b'F', Second, Dir::Right) => true,
 
-        _ => false
+        _ => false,
     }
 }
 
