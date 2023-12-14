@@ -28,40 +28,95 @@ impl Pattern {
     }
 
     fn find_vertical_mirror(&self) -> usize {
-        'mirror_line: for c in 0..(self.width-1) {
+        let mut the_smudge = None;
+        let mut mirror_cols = Vec::new();
+
+        for c in 0..(self.width-1) {
+            let mut any_unequal = false;
+            let mut smudges = 0;
+            let mut smudge = (0, 0, 0);
+
             for c2 in c+1..self.width {
                 let c1 = c - (c2 - c - 1);
                 //println!("{c}: Checking col {c1} vs {c2}");
-                if ! (0..self.height)
-                .map(|row| (self.index(row, c1), self.index(row, c2)))
-                .all(|(e1, e2)| e1 == e2) {
-                    continue 'mirror_line;
+                
+                let count_unequal = (0..self.height)
+                    .map(|row| (row, self.index(row, c1), self.index(row, c2)))
+                    .filter(|(row, e1, e2)| if e1 != e2 {
+                        smudge = (*row, c, c1);
+                        true
+                    } else { false })
+                    .count();
+                
+                if count_unequal == 1 {
+                    smudges += 1;
                 }
+
+                if count_unequal > 0 {
+                    any_unequal = true;
+                }
+
                 if c1 == 0 {
                     break;
                 }
             }
-            return c + 1;
+
+            if smudges == 1 {
+                the_smudge = Some(smudge);
+            }
+
+            if !any_unequal {
+                mirror_cols.push(c+1);
+            }
         }
-        0
+        println!("Col Smudge: {:?}", &the_smudge);
+        println!("Col Mirrors: {:?}", &mirror_cols);
+        *mirror_cols.last().unwrap_or(&0)
     }
+
     fn find_horizontal_mirror(&self) -> usize {
-        'mirror_line: for r in 0..(self.height-1) {
+        let mut the_smudge = None;
+        let mut mirror_rows = Vec::new();
+
+        for r in 0..(self.height-1) {
+            let mut any_unequal = false;
+            let mut smudges = 0;
+            let mut smudge = (0, 0, 0);
             for r2 in r+1..self.height {
                 let r1 = r - (r2 - r - 1);
-                //println!("Checking row {r1} vs {r2}");
-                if ! (0..self.width)
-                .map(|col| (self.index(r1, col), self.index(r2, col)))
-                .all(|(e1, e2)| e1 == e2) {
-                    continue 'mirror_line;
+                
+                let count_unequal = (0..self.width)
+                    .map(|col: usize| (col, self.index(r1, col), self.index(r2, col)))
+                    .filter(|(col, e1, e2)| if e1 != e2 {
+                        smudge = (*col, r, r1);
+                        true
+                    } else { false })
+                    .count();
+                
+                if count_unequal == 1 {
+                    smudges += 1;
                 }
+
+                if count_unequal > 0 {
+                    any_unequal = true;
+                }
+
                 if r1 == 0 {
                     break;
                 }
             }
-            return r+1;
+
+            if smudges == 1 {
+                the_smudge = Some(smudge);
+            }
+
+            if !any_unequal {
+                mirror_rows.push(r+1);
+            }
         }
-        0
+        println!("Row Smudge: {:?}", the_smudge);
+        println!("Row Mirrors: {:?}", &mirror_rows);
+        *mirror_rows.last().unwrap_or(&0)
     }
 
     fn mirror_value(&self) -> usize {
