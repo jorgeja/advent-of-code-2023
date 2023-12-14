@@ -48,7 +48,7 @@ fn solve(input: &str) -> (i32, i32) {
     sum
 }
 
-fn solve_part2(input: &str) -> u32 {
+fn solve_part2(_input: &str) -> u32 {
     0
 }
 

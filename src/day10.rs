@@ -318,7 +318,7 @@ fn find_pools(looop: &Loop, field: &Field) -> u32 {
         .sum()
 }
 
-const edge_point_offsets: [(i32, i32); 9] = [
+const EDGE_POINT_OFFSETS: [(i32, i32); 9] = [
     (-1, -1),
     (0, -1),
     (1, -1),
@@ -330,7 +330,7 @@ const edge_point_offsets: [(i32, i32); 9] = [
     (-1, -1),
 ];
 
-const direction: [Dir; 8] = [
+const DIRECTION: [Dir; 8] = [
     Dir::Up,
     Dir::Up,
     Dir::Right,
@@ -349,12 +349,12 @@ fn is_inside(
 ) -> bool {
     let mut start_points = Vec::new();
     for (point, _) in pool.iter().filter(|p| !p.1.is_empty()) {
-        for (i, window) in edge_point_offsets.windows(2).enumerate() {
+        for (i, window) in EDGE_POINT_OFFSETS.windows(2).enumerate() {
             let pos1 = (point.0 + window[0].0, point.1 + window[0].1);
             let pos2 = (point.0 + window[1].0, point.1 + window[1].1);
             if loop_coords.contains(&pos1) && loop_coords.contains(&pos2) {
-                start_points.push((pos1, pos2, direction[i]));
-                //println!("Possible crack in loop wall at {:?}", (pos1, pos2, direction[i]))
+                start_points.push((pos1, pos2, DIRECTION[i]));
+                //println!("Possible crack in loop wall at {:?}", (pos1, pos2, DIRECTION[i]))
             }
         }
     }
