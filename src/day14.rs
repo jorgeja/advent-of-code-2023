@@ -11,16 +11,6 @@ O.#..O.#.#
 #....###..
 #OO..#...."#;
 
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Dir {
-    North,
-    East,
-    South,
-    West
-}
-
-
 #[derive(Debug, Default)]
 struct Pattern {
     height: usize,
