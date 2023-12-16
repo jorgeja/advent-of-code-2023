@@ -17,32 +17,56 @@ fn solve_part1(input: &str) -> u32 {
       }).sum()
 }
 
-struct Map<T, 'a> {
-    storage: Vec<Vec<(&str, T)>>
+struct Map {
+    storage: Vec<Vec<(String, u32)>>
 }
 
-impl<T, 'a> Map<T, 'a> {
+impl Map {
     fn new() -> Self {
         Self {
             storage: Vec::from_iter((0..256).map(|_| Vec::default()))
         }
     }
 
-    fn insert(&self, key: &'a str, val: T) {
+    fn insert(&mut self, key: &str, val: u32) {
         let index = hash_str(key);
+        if let Some((_, stored_val)) = self.storage[index as usize].iter_mut().find(|elem| &elem.0 == key) {
+            *stored_val = val;
+        } else {
+            self.storage[index as usize].push((key.to_owned(), val));
+        }
+    }
+
+    fn remove(&mut self, key: &str) {
+        let index = hash_str(key);
+        self.storage[index as usize].retain(|elem| &elem.0 != key)
+    }
+
+    fn focusing_power(&self) -> u32 {
+        self.storage.iter().enumerate().map(|(num, stored_box)| -> u32 {
+            stored_box.iter().enumerate().map(|(i, (_, lens))| (num as u32 + 1) * (i as u32 + 1) * *lens).sum()
+        }).sum()
     }
 }
 
 fn solve_part2(input: &str) -> u32 {
-    let mut map = [Vec::new(); 256];
+    let mut map = Map::new();
+    
     for operation in input.split(',') {
         if let Some(label_end_index) = operation.find('-') {
             let label = &operation[0..label_end_index];
-            let hash 
+            map.remove(label);
+        } else if let Some(label_end_index) = operation.find('=') {
+            let label = &operation[0..label_end_index];
+
+            match operation[label_end_index+1..label_end_index+2].parse::<u32>() {
+                Ok(val) => map.insert(label, val),
+                Err(err) => println!("Cant parse {} to int, because {err}", &operation[label_end_index+1..])
+            }   
         }
     }
 
-    0
+    map.focusing_power()
 }
 
 #[cfg(test)]
@@ -72,7 +96,7 @@ mod tests {
     #[test]
     fn day15_part2_test() {
         let res = solve_part2(EXAMPLE);
-        assert_eq!(res, 64);
+        assert_eq!(res, 145);
     }
 
     #[test]
