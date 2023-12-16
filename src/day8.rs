@@ -72,68 +72,59 @@ fn solve_part1(input: &str) -> u32 {
 }
 
 fn solve_part2(input: &str) -> u64 {
-    let (_, nodes) = parse(input);
+    let (instructions, nodes) = parse(input);
 
-    let mut next_nodes = nodes
+    let mut start_nodes = nodes
         .keys()
         .filter(|k| k.ends_with('A'))
-        .map(|s| (s.as_str(), 0))
+        .map(|s| s.as_str())
         .collect::<Vec<_>>();
-    next_nodes.sort();
-    //let end_nodes = nodes.keys().filter(|k| k.ends_with('Z') ).map(|s| s.as_str()).collect::<Vec<_>>();
-    println!("Num start nodes: {}", next_nodes.len());
-    for (n, s) in &next_nodes {
-        println!("{}, {}", n, s);
-    }
+    
+    start_nodes.sort();
 
-    // println!("Num end nodes: {}", end_nodes.len());
-    // for s in &end_nodes {
-    //     println!("{s}");
-    // }
-
-    let mut previously_visited = HashMap::new();
-    let mut steps = 0u64;
-    while next_nodes.iter().any(|(_, step)| *step == 0) {
-        steps += 1;
-        let mod_step: u8 = (steps % 2) as u8;
-
-        for (i, (node, step)) in next_nodes.iter_mut().enumerate() {
-            let (left, right) = &nodes[*node];
-
-            if let Some(last_steps) = previously_visited.get(&(i as u8, mod_step, *node)) {
-                if i == 2 {
-                    println!("{steps}: Cycle found for {node}:{step} on path {i} last visited at {last_steps}: {left} {right}");
+    let mut cycle_steps = Vec::new();
+    for start_node in start_nodes {
+        let mut last_seen = HashMap::new();
+        let mut next_node = start_node;
+        let mut steps = 1usize;
+        let mut last_seen_steps = 0usize;
+        let mut z_has_been_seen = false;
+        'cycle: loop {
+            for inst in instructions.chars() {
+                if next_node.contains('Z') {
+                    z_has_been_seen = true;
+                    println!("{} : {}", next_node, steps);
                 }
-            } else {
-                previously_visited.insert((i as u8, mod_step, *node), steps);
-            }
-            match mod_step {
-                0 => *node = right.as_ref(),
-                1 => *node = left.as_ref(),
-                _ => unreachable!(),
-            }
 
-            if node.ends_with("Z") {
-                *step = steps;
-                break;
-            }
+                let node = &nodes[next_node];
+                if let Some(last_steps) = last_seen.get(&(next_node, inst)) {
+                    if z_has_been_seen {
+                        last_seen_steps = *last_steps;
+                        break 'cycle;
+                    }
+                } else {
+                    last_seen.insert((next_node, inst), steps);
+                }
 
-            if node.contains("Z") {
-                println!("Z-node: {node}");
+                match inst {
+                    'L' => next_node = &node.0,
+                    'R' => next_node = &node.1,
+                    _ => {}
+                }
+
+                steps += 1;
             }
         }
 
-        if steps > 200 {
-            break;
-        }
+        cycle_steps.push((next_node.to_owned(), last_seen_steps, steps));
+        println!("{:?}", cycle_steps.last());
     }
 
-    println!("Current state:");
-    for (n, s) in next_nodes {
-        println!("{}, {}", n, s);
+    for (_, ls, s) in cycle_steps {
+        print!(" {},", s-ls);
     }
 
-    steps
+    0
 }
 
 #[cfg(test)]
@@ -172,6 +163,11 @@ mod tests {
         let input = get_input(2023, 8)?;
         let res = solve_part2(&input);
         println!("day8 Part2 Result: {res}");
+        
+        // let factors = vec![2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 3 , 19 , 1879049 , 69751037u64];
+        // let res = factors.iter().fold(1, |acc, v| acc * *v);
         Ok(())
     }
+
+
 }
