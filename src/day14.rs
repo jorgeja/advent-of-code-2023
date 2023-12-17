@@ -1,4 +1,4 @@
-use std::{path::Display, fmt::Write, collections::HashMap};
+use std::{collections::HashMap, fmt::Write, path::Display};
 
 const EXAMPLE: &str = r#"O....#....
 O.OO#....#
@@ -16,10 +16,10 @@ struct Pattern {
     height: usize,
     width: usize,
     data: Vec<u8>,
-    buffer: Vec<u8>
+    buffer: Vec<u8>,
 }
 
-fn get_index(data: &[u8], width:usize, row: usize, col: usize) -> u8 {
+fn get_index(data: &[u8], width: usize, row: usize, col: usize) -> u8 {
     let i = row * width + col;
     *data.get(i).unwrap_or(&0)
 }
@@ -50,23 +50,25 @@ impl Pattern {
             }
         }
         self.data.clear();
-        self.data.extend(self.buffer.iter().copied()); 
+        self.data.extend(self.buffer.iter().copied());
     }
 
     fn tilt_north(&mut self) {
         self.buffer = self.data.clone();
-        
+
         for row in 1..self.height {
             for col in 0..self.width {
                 let cur_rock = get_index(&self.data, self.width, row, col);
-                if !(cur_rock == b'O') {continue}
-                
+                if !(cur_rock == b'O') {
+                    continue;
+                }
+
                 let mut rock_row = row;
                 let orig_idx = row * self.width + col;
 
                 for past_row in (0..row).rev() {
                     let rock = get_index(&self.buffer, self.width, past_row, col);
-                    if rock != b'.' {   
+                    if rock != b'.' {
                         break;
                     } else {
                         rock_row = past_row;
@@ -174,7 +176,6 @@ mod tests {
         println!("{res}");
         assert_eq!(res, 136)
     }
-
 
     #[test]
     fn day14_part1() -> Result<(), Box<dyn Error>> {

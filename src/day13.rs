@@ -28,7 +28,7 @@ impl std::fmt::Display for Pattern {
         f.write_fmt(format_args!("W: {} H: {}\n", self.width, self.height))?;
         for r in 0..self.height {
             for c in 0..self.width {
-                let chr = self.index( r, c);
+                let chr = self.index(r, c);
                 f.write_char(*chr as char)?;
             }
 
@@ -48,23 +48,27 @@ impl Pattern {
         let mut the_smudge = None;
         let mut mirror_cols = Vec::new();
 
-        for c in 0..(self.width-1) {
+        for c in 0..(self.width - 1) {
             let mut unequal = 0;
             let mut smudges = 0;
             let mut smudge = (0, 0, 0, 0);
 
-            for c2 in c+1..self.width {
+            for c2 in c + 1..self.width {
                 let c1 = c - (c2 - c - 1);
                 //print!("{c}: Checking col {c1} vs {c2}");
-                
+
                 let count_unequal = (0..self.height)
                     .map(|row| (row, self.index(row, c1), self.index(row, c2)))
-                    .filter(|(row, e1, e2)| if e1 != e2 {
-                        smudge = (*row, c, c1, c2);
-                        true
-                    } else { false })
+                    .filter(|(row, e1, e2)| {
+                        if e1 != e2 {
+                            smudge = (*row, c, c1, c2);
+                            true
+                        } else {
+                            false
+                        }
+                    })
                     .count();
-                
+
                 if count_unequal == 1 {
                     smudges += 1;
                     //println!(" > Smudge: {:?}", smudge);
@@ -81,12 +85,12 @@ impl Pattern {
                 }
             }
 
-            if smudges == 1 && unequal == 1{
+            if smudges == 1 && unequal == 1 {
                 the_smudge = Some(smudge);
             }
 
             if unequal == 0 {
-                mirror_cols.push(c+1);
+                mirror_cols.push(c + 1);
             }
         }
         if let Some(smdg) = the_smudge {
@@ -108,21 +112,25 @@ impl Pattern {
         let mut the_smudge = None;
         let mut mirror_rows = Vec::new();
 
-        for r in 0..(self.height-1) {
+        for r in 0..(self.height - 1) {
             let mut unequal = 0;
             let mut smudges = 0;
             let mut smudge = (0, 0, 0, 0);
-            for r2 in r+1..self.height {
+            for r2 in r + 1..self.height {
                 let r1 = r - (r2 - r - 1);
                 //print!("{r}: Checking row {r1} vs {r2}");
                 let count_unequal = (0..self.width)
                     .map(|col: usize| (col, self.index(r1, col), self.index(r2, col)))
-                    .filter(|(col, e1, e2)| if e1 != e2 {
-                        smudge = (*col, r, r1, r2);
-                        true
-                    } else { false })
+                    .filter(|(col, e1, e2)| {
+                        if e1 != e2 {
+                            smudge = (*col, r, r1, r2);
+                            true
+                        } else {
+                            false
+                        }
+                    })
                     .count();
-                
+
                 if count_unequal == 1 {
                     smudges += 1;
                     //println!(" > {smudges} Smudge: {:?}", smudge);
@@ -144,7 +152,7 @@ impl Pattern {
             }
 
             if unequal == 0 {
-                mirror_rows.push(r+1);
+                mirror_rows.push(r + 1);
             }
         }
 
@@ -159,7 +167,7 @@ impl Pattern {
         if use_smudge {
             return 0;
         }
-        
+
         //println!("Row Mirrors: {:?}", &mirror_rows);
         *mirror_rows.last().unwrap_or(&0)
     }
@@ -197,12 +205,21 @@ fn parse(input: &str) -> Vec<Pattern> {
 
 fn solve_part1(input: &str) -> u32 {
     let patterns = parse(input);
-    patterns.iter().map(|pat| pat.mirror_value(false) as u32).sum()
+    patterns
+        .iter()
+        .map(|pat| pat.mirror_value(false) as u32)
+        .sum()
 }
 
 fn solve_part2(input: &str) -> u32 {
     let patterns = parse(input);
-    patterns.iter().map(|pat| {println!("{}", pat); pat.mirror_value(true) as u32}).sum()
+    patterns
+        .iter()
+        .map(|pat| {
+            println!("{}", pat);
+            pat.mirror_value(true) as u32
+        })
+        .sum()
 }
 
 #[cfg(test)]

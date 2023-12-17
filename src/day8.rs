@@ -79,7 +79,7 @@ fn solve_part2(input: &str) -> u64 {
         .filter(|k| k.ends_with('A'))
         .map(|s| s.as_str())
         .collect::<Vec<_>>();
-    
+
     start_nodes.sort();
 
     let mut cycle_steps = Vec::new();
@@ -87,7 +87,7 @@ fn solve_part2(input: &str) -> u64 {
         let mut last_seen = HashMap::new();
         let mut next_node = start_node;
         let mut steps = 1usize;
-        let mut last_seen_steps = 0usize;
+        let mut last_seen_steps;
         let mut z_has_been_seen = false;
         'cycle: loop {
             for inst in instructions.chars() {
@@ -121,7 +121,7 @@ fn solve_part2(input: &str) -> u64 {
     }
 
     for (_, ls, s) in cycle_steps {
-        print!(" {},", s-ls);
+        print!(" {},", s - ls);
     }
 
     0
@@ -163,11 +163,9 @@ mod tests {
         let input = get_input(2023, 8)?;
         let res = solve_part2(&input);
         println!("day8 Part2 Result: {res}");
-        
+
         // let factors = vec![2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 3 , 19 , 1879049 , 69751037u64];
         // let res = factors.iter().fold(1, |acc, v| acc * *v);
         Ok(())
     }
-
-
 }
