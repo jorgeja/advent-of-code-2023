@@ -169,7 +169,7 @@ impl Ord for State {
 
 fn traverse(orig_grid: &Grid, start: Pos, end: Pos) -> u32 {
     let mut min_heat_loss = usize::MAX;
-    let mut stack = BinaryHeap::new();
+    let mut stack = Vec::new();
     let mut visited = HashMap::new();
     let mut visits = 0;
     let mut cache_hits = 0;
@@ -191,6 +191,7 @@ fn traverse(orig_grid: &Grid, start: Pos, end: Pos) -> u32 {
     });
 
     let mut min_grid = orig_grid.clone();
+    let mut working_stack = Vec::new();
     while let Some(State {
         pos,
         dir,
@@ -210,8 +211,11 @@ fn traverse(orig_grid: &Grid, start: Pos, end: Pos) -> u32 {
         } else {
             visited.insert((pos, dir, consecutive), heat_loss);
         }
-        grid.set(pos.0, pos.1, b'@' - b'0');
- 
+
+        if heat_loss > min_heat_loss {
+            continue;
+        }
+        //grid.set(pos.0, pos.1, b'@' - b'0');
         grid.set(pos.0, pos.1, format_dir(dir));
 
         if pos == end {
@@ -222,6 +226,7 @@ fn traverse(orig_grid: &Grid, start: Pos, end: Pos) -> u32 {
             break;
         }
 
+        working_stack.clear();
         for (next_dir, next_consecutive) in possible(dir, consecutive) {
             let next_pos = move_in_dir(pos, next_dir);
             let current_heat_loss = orig_grid.get(next_pos.0, next_pos.1);
@@ -230,7 +235,7 @@ fn traverse(orig_grid: &Grid, start: Pos, end: Pos) -> u32 {
             }
             let next_heat_loss = current_heat_loss as usize + heat_loss;
             //print!("{}={} ", (b'0' + format_dir(next_dir)) as char, next_heat_loss);
-            stack.push(State {
+            working_stack.push(State {
                 pos: next_pos,
                 dir: next_dir,
                 consecutive: next_consecutive,
@@ -239,7 +244,8 @@ fn traverse(orig_grid: &Grid, start: Pos, end: Pos) -> u32 {
             });
         }
         //println!("");
-        //stack.sort();
+        working_stack.sort();
+        stack.extend(working_stack.iter().cloned());
     }
 
     
