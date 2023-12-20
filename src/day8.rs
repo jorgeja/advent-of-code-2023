@@ -87,7 +87,7 @@ fn solve_part2(input: &str) -> u64 {
         let mut last_seen = HashMap::new();
         let mut next_node = start_node;
         let mut steps = 1usize;
-        let mut last_seen_steps;
+        let last_seen_steps;
         let mut z_has_been_seen = false;
         'cycle: loop {
             for inst in instructions.chars() {

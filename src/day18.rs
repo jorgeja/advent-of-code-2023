@@ -113,7 +113,7 @@ fn dig_out(dig_plan: &DigPlan) -> u32 {
     let mut x = 0;
     let mut y = 0;
 
-    for (command, amount, color) in dig_plan.iter() {
+    for (command, amount, _color) in dig_plan.iter() {
         match *command {
             'U' => {
                 y += *amount;
@@ -145,7 +145,7 @@ fn dig_out(dig_plan: &DigPlan) -> u32 {
     let mut x = width as usize;
     let mut y = height as usize;
     println!("Start [{x}, {y}] ");
-    for (command, amount, color) in dig_plan.iter() {
+    for (command, amount, _color) in dig_plan.iter() {
         match *command {
             'U' => {
                 for _ in 0..*amount {
@@ -250,7 +250,7 @@ fn solve_part1(input: &str) -> u32 {
     dig_out(&dig_plan)
 }
 
-fn solve_part2(input: &str) -> u32 {
+fn solve_part2(_input: &str) -> u32 {
     0
 }
 
