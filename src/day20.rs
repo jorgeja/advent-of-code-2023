@@ -1,9 +1,11 @@
-use core::num;
+use core::{num, panic};
 use std::{
     collections::{HashMap, BinaryHeap},
     fmt::Write,
     str::FromStr, default,
 };
+
+use lcmx::lcmx;
 
 const EXAMPLE1: &str = r#"broadcaster -> a, b, c
 %a -> b
@@ -195,7 +197,85 @@ fn solve_part1(loops: usize, input: &str) -> u32 {
 }
 
 fn solve_part2(input: &str) -> u32 {
-    0
+    let mut system = parse(input);
+
+    let mut conj_loops = HashMap::new();
+    let mut conjs = 0;
+    for (_, node) in system.iter() {
+        if let NodeType::Conjunc(_) = node.node_type {
+            conjs += 1;
+        }
+    }
+
+    let mut stack = BinaryHeap::new();
+    let mut button_pushes = 0;
+    loop {
+        button_pushes += 1;
+        stack.push(Signal{
+            iter: usize::MAX, sender: "button", receiver: "broadcaster", pulse: State::Low
+        });
+        //println!("\nNew Loop");
+
+        while let Some(Signal { iter, sender, receiver, pulse }) = stack.pop() {
+            let node = system.get_mut(receiver).unwrap();
+            //println!("{sender} -{pulse:?}-> {receiver}");
+            if let Some(out_pulse) = match &mut node.node_type {
+                NodeType::Unknown => None,
+                NodeType::BroadCaster => Some(pulse),
+                NodeType::FlipFlop(flip_flop) => flip_flop.set_state(pulse),
+                NodeType::Conjunc(conjunc) => {
+                    let p = conjunc.set_state(sender, pulse);
+                    if p == State::Low {
+                        let (last_button_push, delta) = conj_loops.entry(receiver).or_insert((button_pushes, 0));
+                        if *last_button_push != button_pushes {
+                            let new_delta = button_pushes - *last_button_push;
+                            if *delta > 0 && *delta != new_delta {
+                                panic!("Nah.. doesnt work.. delta: {delta}, new_delta: {new_delta}");
+                            }
+                            //println!("Loop for {receiver} at {button_pushes} delta: {delta}");
+                            *last_button_push = button_pushes;
+                            *delta = new_delta;
+                        }
+                    }
+                    Some(p)
+                },
+            } {
+                if iter == 0 { panic!("Iter is ZERO..") }
+
+                let next_iter = iter - 1;
+
+                for output in node.outputs.iter().rev() {
+                    stack.push(Signal{
+                        iter: next_iter, sender: receiver, receiver: output, pulse: out_pulse
+                    });
+                }
+            }
+        }
+
+        if button_pushes % 1000000 == 0 {
+            println!("Still pushing after {button_pushes}..");
+            let mut num_loops = 0;
+            for (_, (_, delta)) in conj_loops.iter() {
+                if *delta > 0 {
+                    num_loops += 1;
+                }
+            }
+            println!("Conj's looping: {num_loops}/{} tot: {conjs}", conj_loops.len());
+
+            if conjs - num_loops == 1 {
+                break;
+            }
+        }
+    }
+
+    let mut loop_vals = Vec::new();
+    for elem in conj_loops.iter() {
+        println!("{elem:?}");
+        loop_vals.push(elem.1.1);
+    }
+    println!("Found all except one loop after {button_pushes}");
+
+    lcmx(&loop_vals).unwrap()
 }
 
 #[cfg(test)]
@@ -242,11 +322,11 @@ mod tests {
     //     assert_eq!(res, 51);
     // }
 
-    // #[test]
-    // fn day20_part2() -> Result<(), Box<dyn Error>> {
-    //     let input = get_input(2023, 20)?;
-    //     let res = solve_part2(&input);
-    //     println!("day20 Part2 Result: {res}");
-    //     Ok(())
-    // }
+    #[test]
+    fn day20_part2() -> Result<(), Box<dyn Error>> {
+        let input = get_input(2023, 20)?;
+        let res = solve_part2(&input);
+        println!("day20 Part2 Result: {res}");
+        Ok(())
+    }
 }
