@@ -102,6 +102,24 @@ fn parse(input: &str) -> DigPlan {
     dig_plan
 }
 
+type Dir = (isize, isize);
+
+const UP: Dir = (0, -1);
+const DOWN: Dir = (0, 1);
+const RIGHT: Dir = (1, 0);
+const LEFT: Dir = (-1, 0);
+const NONE: Dir = (0, 0);
+
+fn format_dir(dir: Dir) -> char {
+    match dir {
+        UP => '^',
+        DOWN => 'v',
+        RIGHT => '>',
+        LEFT => '<',
+        _ => '#',
+    }
+}
+
 fn dig_out(dig_plan: &DigPlan) -> u32 {
     // let mut hole = Vec::new();
 
@@ -116,16 +134,16 @@ fn dig_out(dig_plan: &DigPlan) -> u32 {
     for (command, amount, _color) in dig_plan.iter() {
         match *command {
             'U' => {
-                y += *amount;
-                max_y = max_y.max(y);
+                y -= *amount;
+                min_y = min_y.min(y);
             },
             'L' => {
                 x -= *amount;
                 min_x = min_x.min(x);
             },
             'D' => {
-                y -= *amount;
-                min_y = min_y.min(y);
+                y += *amount;
+                max_y = max_y.max(y);
             },
             'R' => {
                 x += *amount;
@@ -140,99 +158,148 @@ fn dig_out(dig_plan: &DigPlan) -> u32 {
 
     println!("X: [{min_x}:{max_x}], Y: [{min_y}:{max_y}]");
     println!("W: {width}, H: {height}");
-    let mut hole = Vec::from_iter((0..(height+1)*2).map(|_| Vec::<bool>::from_iter((0..(width+1)*2).map(|_| false))));
+    let mut hole = Vec::from_iter((0..(height+3)).map(|_| Vec::<(bool, Dir)>::from_iter((0..(width+3)).map(|_| (false, NONE)))));
     
-    let mut x = width as usize;
-    let mut y = height as usize;
+    let mut x = if min_x < 0 {-min_x} else {0} as usize + 1;
+    let mut y = if min_y < 0 {-min_y} else {0} as usize + 1;
+
     println!("Start [{x}, {y}] ");
+    let mut dir = DOWN;
+    let mut last_move = ' ';
     for (command, amount, _color) in dig_plan.iter() {
+        //let last_dir = dir;
         match *command {
             'U' => {
+                dir = match (last_move, dir) {
+                    ('R', UP) => LEFT,
+                    ('R', DOWN) => RIGHT,
+                    ('L', UP) => RIGHT,
+                    ('L', DOWN) => LEFT,
+                    _ => unreachable!(),
+                };
+                //println!("{last_move} > {command}, {} => {}", format_dir(last_dir), format_dir(dir));
                 for _ in 0..*amount {
-                    hole[y][x] = true;
+                    hole[y][x] = (true, dir);
                     y -= 1
                 }
             },
             'L' => {
+                dir = match (last_move, dir) {
+                    ('D', LEFT) => UP,
+                    ('D', RIGHT) => DOWN,
+                    ('U', LEFT) => DOWN,
+                    ('U', RIGHT) => UP,
+                    _ => unreachable!(),
+                };
+                
+                //println!("{last_move} > {command}, {} => {}", format_dir(last_dir), format_dir(dir));
                 for _ in 0..*amount {
-                    hole[y][x] = true;
+                    hole[y][x] = (true, dir);
                     x -= 1
                 }
             },
             'D' => {
+                dir = match (last_move, dir) {
+                    ('R', UP) => RIGHT,
+                    ('R', DOWN) => LEFT,
+                    ('L', UP) => LEFT,
+                    ('L', DOWN) => RIGHT,
+                    _ => unreachable!(),
+                };
+                //println!("{last_move} > {command}, {} => {}", format_dir(last_dir), format_dir(dir));
                 for _ in 0..*amount {
-                    hole[y][x] = true;
+                    hole[y][x] = (true, dir);
                     y += 1
                 }
             },
             'R' => {
+                dir = match (last_move, dir) {
+                    ('D', LEFT) => DOWN,
+                    ('D', RIGHT) => UP,
+                    ('U', LEFT) => UP,
+                    ('U', RIGHT) => DOWN,
+                    _ => dir,
+                };
+                
+                //println!("{last_move} > {command}, {} => {}", format_dir(last_dir), format_dir(dir));
                 for _ in 0..*amount {
-                    hole[y][x] = true;
+                    hole[y][x] = (true, dir);
                     x += 1
                 }
             },
             _ => {}
         }
+        last_move = *command;
     }
 
-    format(&hole);
+    //format(&hole);
     measure_hole(&hole)
 }
 
+use image::*;
+fn measure_hole(hole: &Vec<Vec<(bool, Dir)>>) -> u32 {
+    // let mut image: RgbImage  = ImageBuffer::new(hole[0].len() as u32, hole.len() as u32);
 
-fn measure_hole(hole: &Vec<Vec<bool>>) -> u32 {
+    // image.put_pixel(0, 0, Rgb([255, 255, 255]));
+    // image.put_pixel(hole[0].len() as u32 - 1, hole.len() as u32 - 1, Rgb([0, 255, 0]));
+    // image.put_pixel(hole[0].len() as u32 - 1, 0 as u32, Rgb([0, 0, 255]));
+    // image.put_pixel(0, hole.len() as u32 - 1, Rgb([255, 255, 0]));
+
     let mut filled_holes = 0;
-    for row in hole.iter() {
-        //let mut inside = false;
-        let mut last_col = false;
+    for (y, row) in hole.iter().enumerate() {
+        let mut last_was_edge = false;
+        let mut last_dir = NONE;
         let mut rising_edge = 0;
         let mut falling_edge = 0;
-        let mut num_raised_edges = 0;
-        let mut num_felled_edges = 0;
+        let mut fell_inside = false;
 
-        for (i, col) in row.iter().enumerate() {
-            if *col && !last_col {
-                rising_edge = i;
-                num_raised_edges += 1;
+        for (x, (is_edge, inside_dir)) in row.iter().enumerate() {
+            // if *is_edge {
+            //     image.put_pixel(x as u32, y as u32, Rgb([0, 0, 255]));
+            // }
+            
+            if *is_edge && !last_was_edge {
+                rising_edge = x;
 
-                if falling_edge > 0 && num_felled_edges % 2 == 1{
+                if falling_edge > 0 && fell_inside {
                     let delta = rising_edge - falling_edge;
                     filled_holes += delta;
-                    falling_edge = 0;
 
-                    for _ in 0..delta {
-                        print!("F");
-                    }
+                    // for dx in falling_edge..rising_edge {
+                    //     //print!("F");
+                    //     image.put_pixel(dx as u32, y as u32, Rgb([255, 0, 0]));
+                    // }
+
+                    falling_edge = 0;
+                    fell_inside = false;
                 }
             }
 
-            if !*col && last_col {
-                falling_edge = i;
-                num_felled_edges += 1;
+            if !*is_edge && last_was_edge {
+                falling_edge = x;
 
                 if rising_edge > 0 {
                     let delta = falling_edge - rising_edge;
                     filled_holes += delta;
-                    rising_edge = 0;
 
-                    for _ in 0..delta {
-                        print!("R");
-                    }
+                    // for dx in rising_edge..falling_edge {
+                    //     //image.put_pixel(dx as u32, y as u32, Rgb([0, 255, 0]));
+                    // }
+
+                    rising_edge = 0;
+                }
+
+                if last_dir == RIGHT || hole[y - 1][x - 1].1 == RIGHT || hole[y + 1][x - 1].1 == RIGHT {
+                    fell_inside = true;
                 }
             }
 
-            // if num_raised_edges == 0 {
-            //     print!(".");
-            // }
-
-            last_col = *col;
-        }
-
-        if num_raised_edges > 0 {
-            println!("");
+            last_dir = *inside_dir;
+            last_was_edge = *is_edge;
         }
     }
     
+    //image.save("test.png").unwrap();
     filled_holes as u32
 }
 
@@ -248,6 +315,91 @@ fn format(hole: &Vec<Vec<bool>>) {
 fn solve_part1(input: &str) -> u32 {
     let dig_plan = parse(input);
     dig_out(&dig_plan)
+}
+
+type Pos = (i64, i64);
+struct Edge {
+    start: (i64, i64),
+    end: (i64, i64)
+}
+
+fn dig_big(dig_plan: &DigPlan) -> u32 {
+
+
+    let mut dir = DOWN;
+    let mut last_move = ' ';
+
+    let mut left_edges = Vec::new();
+    let mut right_edges = Vec::new();
+
+    for (command, amount, _color) in dig_plan.iter() {
+        //let last_dir = dir;
+        match *command {
+            'U' => {
+                dir = match (last_move, dir) {
+                    ('R', UP) => LEFT,
+                    ('R', DOWN) => RIGHT,
+                    ('L', UP) => RIGHT,
+                    ('L', DOWN) => LEFT,
+                    _ => unreachable!(),
+                };
+                //println!("{last_move} > {command}, {} => {}", format_dir(last_dir), format_dir(dir));
+                for _ in 0..*amount {
+                    hole[y][x] = (true, dir);
+                    y -= 1
+                }
+            },
+            'L' => {
+                dir = match (last_move, dir) {
+                    ('D', LEFT) => UP,
+                    ('D', RIGHT) => DOWN,
+                    ('U', LEFT) => DOWN,
+                    ('U', RIGHT) => UP,
+                    _ => unreachable!(),
+                };
+                
+                //println!("{last_move} > {command}, {} => {}", format_dir(last_dir), format_dir(dir));
+                for _ in 0..*amount {
+                    hole[y][x] = (true, dir);
+                    x -= 1
+                }
+            },
+            'D' => {
+                dir = match (last_move, dir) {
+                    ('R', UP) => RIGHT,
+                    ('R', DOWN) => LEFT,
+                    ('L', UP) => LEFT,
+                    ('L', DOWN) => RIGHT,
+                    _ => unreachable!(),
+                };
+                //println!("{last_move} > {command}, {} => {}", format_dir(last_dir), format_dir(dir));
+                for _ in 0..*amount {
+                    hole[y][x] = (true, dir);
+                    y += 1
+                }
+            },
+            'R' => {
+                dir = match (last_move, dir) {
+                    ('D', LEFT) => DOWN,
+                    ('D', RIGHT) => UP,
+                    ('U', LEFT) => UP,
+                    ('U', RIGHT) => DOWN,
+                    _ => dir,
+                };
+                
+                //println!("{last_move} > {command}, {} => {}", format_dir(last_dir), format_dir(dir));
+                for _ in 0..*amount {
+                    hole[y][x] = (true, dir);
+                    x += 1
+                }
+            },
+            _ => {}
+        }
+        last_move = *command;
+    }
+
+    //format(&hole);
+    measure_hole(&hole)
 }
 
 fn solve_part2(_input: &str) -> u32 {

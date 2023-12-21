@@ -8,4 +8,5 @@ edition = "2021"
 [dependencies]
 reqwest = {version="0.11.22", features = ["cookies", "blocking"]}
 lcmx = "0.1.4"
+image = "0.24.7"
 rayon = "*"
