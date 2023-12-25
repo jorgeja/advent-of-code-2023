@@ -67,10 +67,16 @@ struct LargeAmount(isize);
 impl FromStr for LargeAmount {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let s = s.strip_prefix("(#").ok_or(format!("Could not remove prefix '(': {:?}", s))?;
-        let s = s.strip_suffix(')').ok_or(format!("Could not remove prefix ')': {:?}", s))?;
-        
-        Ok(LargeAmount(isize::from_str_radix(s, 16).map_err(|_| format!("Could not parse into isize: {:?}", s))?))
+        let s = s
+            .strip_prefix("(#")
+            .ok_or(format!("Could not remove prefix '(': {:?}", s))?;
+        let s = s
+            .strip_suffix(')')
+            .ok_or(format!("Could not remove prefix ')': {:?}", s))?;
+
+        Ok(LargeAmount(isize::from_str_radix(s, 16).map_err(|_| {
+            format!("Could not parse into isize: {:?}", s)
+        })?))
     }
 }
 
@@ -113,7 +119,6 @@ fn format_dir(dir: Dir) -> char {
 fn dig_out(dig_plan: &DigPlan) -> u32 {
     // let mut hole = Vec::new();
 
-    
     let mut min_x = 0;
     let mut max_x = 0;
     let mut min_y = 0;
@@ -126,19 +131,19 @@ fn dig_out(dig_plan: &DigPlan) -> u32 {
             'U' => {
                 y -= *amount;
                 min_y = min_y.min(y);
-            },
+            }
             'L' => {
                 x -= *amount;
                 min_x = min_x.min(x);
-            },
+            }
             'D' => {
                 y += *amount;
                 max_y = max_y.max(y);
-            },
+            }
             'R' => {
                 x += *amount;
                 max_x = max_x.max(x);
-            },
+            }
             _ => {}
         }
     }
@@ -148,10 +153,13 @@ fn dig_out(dig_plan: &DigPlan) -> u32 {
 
     println!("X: [{min_x}:{max_x}], Y: [{min_y}:{max_y}]");
     println!("W: {width}, H: {height}");
-    let mut hole = Vec::from_iter((0..(height+3)).map(|_| Vec::<(bool, Dir)>::from_iter((0..(width+3)).map(|_| (false, NONE)))));
-    
-    let mut x = if min_x < 0 {-min_x} else {0} as usize + 1;
-    let mut y = if min_y < 0 {-min_y} else {0} as usize + 1;
+    let mut hole = Vec::from_iter(
+        (0..(height + 3))
+            .map(|_| Vec::<(bool, Dir)>::from_iter((0..(width + 3)).map(|_| (false, NONE)))),
+    );
+
+    let mut x = if min_x < 0 { -min_x } else { 0 } as usize + 1;
+    let mut y = if min_y < 0 { -min_y } else { 0 } as usize + 1;
 
     println!("Start [{x}, {y}] ");
     let mut dir = DOWN;
@@ -167,8 +175,7 @@ fn dig_out(dig_plan: &DigPlan) -> u32 {
                     ('L', DOWN) => LEFT,
                     _ => unreachable!(),
                 };
-                
-            },
+            }
             'L' => {
                 dir = match (last_move, dir) {
                     ('D', LEFT) => UP,
@@ -177,8 +184,7 @@ fn dig_out(dig_plan: &DigPlan) -> u32 {
                     ('U', RIGHT) => UP,
                     _ => unreachable!(),
                 };
-                
-            },
+            }
             'D' => {
                 dir = match (last_move, dir) {
                     ('R', UP) => RIGHT,
@@ -187,8 +193,7 @@ fn dig_out(dig_plan: &DigPlan) -> u32 {
                     ('L', DOWN) => RIGHT,
                     _ => unreachable!(),
                 };
-
-            },
+            }
             'R' => {
                 dir = match (last_move, dir) {
                     ('D', LEFT) => DOWN,
@@ -197,8 +202,7 @@ fn dig_out(dig_plan: &DigPlan) -> u32 {
                     ('U', RIGHT) => DOWN,
                     _ => dir,
                 };
-
-            },
+            }
             _ => {}
         }
         last_move = *command;
@@ -229,7 +233,7 @@ fn measure_hole(hole: &Vec<Vec<(bool, Dir)>>) -> u32 {
             // if *is_edge {
             //     image.put_pixel(x as u32, y as u32, Rgb([0, 0, 255]));
             // }
-            
+
             if *is_edge && !last_was_edge {
                 rising_edge = x;
 
@@ -261,7 +265,10 @@ fn measure_hole(hole: &Vec<Vec<(bool, Dir)>>) -> u32 {
                     rising_edge = 0;
                 }
 
-                if last_dir == RIGHT || hole[y - 1][x - 1].1 == RIGHT || hole[y + 1][x - 1].1 == RIGHT {
+                if last_dir == RIGHT
+                    || hole[y - 1][x - 1].1 == RIGHT
+                    || hole[y + 1][x - 1].1 == RIGHT
+                {
                     fell_inside = true;
                 }
             }
@@ -270,7 +277,7 @@ fn measure_hole(hole: &Vec<Vec<(bool, Dir)>>) -> u32 {
             last_was_edge = *is_edge;
         }
     }
-    
+
     //image.save("test.png").unwrap();
     filled_holes as u32
 }
@@ -278,7 +285,11 @@ fn measure_hole(hole: &Vec<Vec<(bool, Dir)>>) -> u32 {
 fn format(hole: &Vec<Vec<bool>>) {
     for row in hole.iter() {
         for col in row.iter() {
-            if *col {print!("#")} else {print!(".")}
+            if *col {
+                print!("#")
+            } else {
+                print!(".")
+            }
         }
         println!("");
     }
@@ -295,7 +306,7 @@ type Pos = (isize, isize);
 struct Edge {
     start: Pos,
     end: Pos,
-    length: isize
+    length: isize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -303,20 +314,26 @@ enum Overlap {
     None,
     Split(isize, Edge),
     Contained(isize, Edge, Edge),
-    All(isize)
+    All(isize),
 }
 
 impl Edge {
     fn overlap(&self, other: &Edge) -> Overlap {
         // Only check edges to the right of this edge
-        if self.start.0 >= other.start.0 { return Overlap::None; }
+        if self.start.0 >= other.start.0 {
+            return Overlap::None;
+        }
 
         let (o_y1, o_y2) = (other.start.1, other.end.1);
         let (y1, y2) = (self.start.1, other.end.1);
 
-        if o_y2 < y1 { return Overlap::None; }
-        if o_y1 > y2 { return Overlap::None; }
-        
+        if o_y2 < y1 {
+            return Overlap::None;
+        }
+        if o_y1 > y2 {
+            return Overlap::None;
+        }
+
         let delta_y1 = y1 - o_y1;
         let delta_y2 = y2 - o_y2;
 
@@ -330,13 +347,13 @@ impl Edge {
             let y1_edge = Edge {
                 start: self.start,
                 end: move_in_dir(self.start, -delta_y1, DOWN),
-                length: -delta_y1
+                length: -delta_y1,
             };
 
             let y2_edge = Edge {
                 start: self.start,
                 end: move_in_dir(self.end, delta_y2, UP),
-                length: delta_y2
+                length: delta_y2,
             };
 
             return Overlap::Contained(overlap_length, y1_edge, y2_edge);
@@ -348,9 +365,9 @@ impl Edge {
             let remaining_edge = Edge {
                 start: move_in_dir(self.start, overlap_length, DOWN),
                 end: self.end,
-                length: delta_y2
+                length: delta_y2,
             };
-            return Overlap::Split(overlap_length, remaining_edge)
+            return Overlap::Split(overlap_length, remaining_edge);
         }
 
         if delta_y1 < 0 && delta_y2 < 0 {
@@ -359,10 +376,10 @@ impl Edge {
             let remaining_edge = Edge {
                 start: self.start,
                 end: move_in_dir(self.start, -overlap_length, UP),
-                length: -delta_y1
+                length: -delta_y1,
             };
 
-            return Overlap::Split(overlap_length, remaining_edge)
+            return Overlap::Split(overlap_length, remaining_edge);
         }
 
         Overlap::None
@@ -400,14 +417,22 @@ fn dig_big(dig_plan: &DigPlan) -> usize {
                     _ => unreachable!(),
                 };
                 let end = move_in_dir(pos, *length, UP);
-                
+
                 if dir == LEFT {
-                    left_edges.push(Edge {start: end, end: pos, length: *length})
+                    left_edges.push(Edge {
+                        start: end,
+                        end: pos,
+                        length: *length,
+                    })
                 } else if dir == RIGHT {
-                    right_edges.push(Edge {start: end, end: pos, length: *length})
+                    right_edges.push(Edge {
+                        start: end,
+                        end: pos,
+                        length: *length,
+                    })
                 }
                 pos = end;
-            },
+            }
             'L' => {
                 dir = match (last_move, dir) {
                     ('D', LEFT) => UP,
@@ -416,9 +441,9 @@ fn dig_big(dig_plan: &DigPlan) -> usize {
                     ('U', RIGHT) => UP,
                     _ => unreachable!(),
                 };
-                
+
                 pos = move_in_dir(pos, *length, LEFT);
-            },
+            }
             'D' => {
                 dir = match (last_move, dir) {
                     ('R', UP) => RIGHT,
@@ -429,15 +454,23 @@ fn dig_big(dig_plan: &DigPlan) -> usize {
                 };
 
                 let end = move_in_dir(pos, *length, DOWN);
-                
+
                 if dir == LEFT {
-                    left_edges.push(Edge {start: pos, end, length: *length})
+                    left_edges.push(Edge {
+                        start: pos,
+                        end,
+                        length: *length,
+                    })
                 } else if dir == RIGHT {
-                    right_edges.push(Edge {start: pos, end, length: *length})
+                    right_edges.push(Edge {
+                        start: pos,
+                        end,
+                        length: *length,
+                    })
                 }
 
                 pos = end;
-            },
+            }
             'R' => {
                 dir = match (last_move, dir) {
                     ('D', LEFT) => DOWN,
@@ -448,7 +481,7 @@ fn dig_big(dig_plan: &DigPlan) -> usize {
                 };
 
                 pos = move_in_dir(pos, *length, RIGHT);
-            },
+            }
             _ => {}
         }
         last_move = *command;
@@ -458,29 +491,31 @@ fn dig_big(dig_plan: &DigPlan) -> usize {
 }
 
 fn measure_part2(mut left_edges: Vec<Edge>, mut right_edges: Vec<Edge>) -> usize {
-    
     right_edges.sort_by(|e1, e2| e1.start.0.cmp(&e2.start.0));
 
     let mut area = 0;
     while let Some(left_edge) = left_edges.pop() {
-        if let Some(right_edge) = right_edges.iter().find(|r_e| left_edge.overlap(r_e) != Overlap::None) {
+        if let Some(right_edge) = right_edges
+            .iter()
+            .find(|r_e| left_edge.overlap(r_e) != Overlap::None)
+        {
             let overlap_length = match left_edge.overlap(right_edge) {
                 Overlap::None => continue,
                 Overlap::All(length) => {
                     print!("All: {left_edge:?} contained in {right_edge:?} : {length}");
                     length
-                },
+                }
                 Overlap::Split(length, remaining_edge) => {
                     print!("Split: {left_edge:?} partially contained in {right_edge:?} : {length}. Remainder {remaining_edge:?}");
                     left_edges.push(remaining_edge);
                     length
-                },
+                }
                 Overlap::Contained(length, rem_edge1, rem_edge2) => {
                     print!("Contained: {left_edge:?} contained {right_edge:?} : {length}. Split into {rem_edge1:?} and {rem_edge2:?}");
                     left_edges.push(rem_edge1);
                     left_edges.push(rem_edge2);
                     length
-                },
+                }
             };
 
             let distance = left_edge.distance(right_edge);

@@ -248,7 +248,6 @@ fn traverse(orig_grid: &Grid, start: Pos, end: Pos) -> u32 {
         stack.extend(working_stack.iter().cloned());
     }
 
-    
     println!("{min_grid}");
     println!("Cache Hits: {cache_hits}/{visits}");
     min_heat_loss as u32

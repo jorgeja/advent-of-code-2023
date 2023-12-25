@@ -1,7 +1,8 @@
 use std::{
-    collections::{HashMap, HashSet, BinaryHeap},
+    collections::{BinaryHeap, HashMap, HashSet},
+    error::Error,
     fmt::Write,
-    str::FromStr, error::Error,
+    str::FromStr,
 };
 
 const EXAMPLE: &str = r#"1,0,1~1,2,1
@@ -17,13 +18,16 @@ type Pos = (isize, isize, isize);
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Brick {
     start: Pos,
-    end: Pos
+    end: Pos,
 }
 
 impl Brick {
     fn overlap_xy(&self, other: &Brick) -> bool {
-        if other.start.0 > self.end.0 || other.start.1 > self.end.1 
-        || other.end.0 < self.start.0 || other.end.1 < self.start.1 {
+        if other.start.0 > self.end.0
+            || other.start.1 > self.end.1
+            || other.end.0 < self.start.0
+            || other.end.1 < self.start.1
+        {
             false
         } else {
             true
@@ -40,31 +44,32 @@ impl FromStr for Brick {
         let mut parts = s.split('~');
         let mut start_nums = parts.next().ok_or(format!("Bad format"))?.split(',');
         let mut end_nums = parts.next().ok_or(format!("Bad format"))?.split(',');
-        Ok(Brick { 
+        Ok(Brick {
             start: (
                 start_nums.next().ok_or(format!("Bad format"))?.parse()?,
                 start_nums.next().ok_or(format!("Bad format"))?.parse()?,
                 start_nums.next().ok_or(format!("Bad format"))?.parse()?,
-            ), 
+            ),
             end: (
                 end_nums.next().ok_or(format!("Bad format"))?.parse()?,
                 end_nums.next().ok_or(format!("Bad format"))?.parse()?,
                 end_nums.next().ok_or(format!("Bad format"))?.parse()?,
-            ), 
+            ),
         })
     }
 }
 
 fn solve_part1(input: &str) -> u32 {
-    let mut bricks = input.lines().filter_map(|l| 
-        match Brick::from_str(l) {
+    let mut bricks = input
+        .lines()
+        .filter_map(|l| match Brick::from_str(l) {
             Ok(b) => Some(b),
             Err(e) => {
                 println!("Could not parse brick from {l}: {e}");
                 None
             }
-        }
-    ).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
 
     if !bricks.iter().all(Brick::check_format) {
         panic!("Not all bricks have the correct format!!");
@@ -93,7 +98,6 @@ fn solve_part1(input: &str) -> u32 {
                 } else {
                     //println!("");
                 }
-                
             }
         }
 
@@ -104,12 +108,12 @@ fn solve_part1(input: &str) -> u32 {
     let mut supported_by = HashMap::new();
 
     for (i, brick) in bricks.iter().enumerate() {
-        for (j, other_brick) in bricks[i+1..].iter().enumerate() {
+        for (j, other_brick) in bricks[i + 1..].iter().enumerate() {
             let j = j + i + 1;
             if brick.overlap_xy(other_brick) {
                 let this_top_z = brick.end.2;
                 let other_bottom_z = other_brick.start.2;
-                
+
                 let this_bottom_z = brick.start.2;
                 let other_top_z = other_brick.end.2;
 
@@ -137,7 +141,7 @@ fn solve_part1(input: &str) -> u32 {
     }
 
     let mut can_be_removed = HashSet::new();
-    
+
     for (supported, supporters) in supported_by.iter() {
         //println!("{supported:?} supported by {supporters:?}");
         if supporters.len() > 1 {
@@ -154,7 +158,7 @@ fn solve_part1(input: &str) -> u32 {
     for (_, supporters) in supported_by.iter() {
         //println!("{supported:?} supported by {supporters:?}");
         if supporters.len() == 1 {
-           let _ = can_be_removed.remove(&supporters[0]); 
+            let _ = can_be_removed.remove(&supporters[0]);
         }
     }
 

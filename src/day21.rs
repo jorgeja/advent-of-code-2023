@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet, BinaryHeap},
+    collections::{BinaryHeap, HashMap, HashSet},
     fmt::Write,
     str::FromStr,
 };
@@ -49,7 +49,7 @@ impl Grid {
             }
         }
         (0, 0)
-    } 
+    }
 }
 
 impl FromStr for Grid {
@@ -87,7 +87,7 @@ type Pos = (usize, usize);
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Plot {
     step: usize,
-    pos: Pos
+    pos: Pos,
 }
 
 impl<'a> PartialOrd for Plot {
@@ -107,10 +107,13 @@ fn solve_part1(steps: usize, input: &str) -> u32 {
     println!("{grid}");
     let start = grid.find_start();
     let mut stack = BinaryHeap::new();
-    
+
     for (x, y) in [(-1, 0), (0, -1), (1, 0), (0, 1)] {
         let next_pos = ((start.0 as i32 + x) as usize, (start.1 as i32 + y) as usize);
-        stack.push(Plot { step: steps - 1, pos: next_pos });
+        stack.push(Plot {
+            step: steps - 1,
+            pos: next_pos,
+        });
     }
     let mut current_step = steps - 1;
 
@@ -123,11 +126,13 @@ fn solve_part1(steps: usize, input: &str) -> u32 {
         }
 
         let tile = grid.get(pos.0, pos.1);
-        
+
         //println!("[{step}] {pos:?} : {}", tile as char);
 
-        if tile != b'.' { continue }
-        
+        if tile != b'.' {
+            continue;
+        }
+
         if step % 2 == 0 {
             even_plots += 1;
         } else {
@@ -135,11 +140,16 @@ fn solve_part1(steps: usize, input: &str) -> u32 {
         }
 
         grid.set(pos.0, pos.1, b'O');
-        if step == 0 { continue }
+        if step == 0 {
+            continue;
+        }
 
         for (x, y) in [(-1, 0), (0, -1), (1, 0), (0, 1)] {
             let next_pos = ((pos.0 as i32 + x) as usize, (pos.1 as i32 + y) as usize);
-            stack.push(Plot { step: step - 1, pos: next_pos });
+            stack.push(Plot {
+                step: step - 1,
+                pos: next_pos,
+            });
         }
     }
 
